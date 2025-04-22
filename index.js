@@ -7,6 +7,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root route handler
+app.get('/', (req, res) => {
+    res.json({
+        message: "Backend server is running",
+        endpoints: {
+            appointment: "/api/book-appointment",
+            contact: "/api/contact-us"
+        }
+    });
+});
+
 // SMTP Configuration for Appointment Form
 const appointmentTransporter = nodemailer.createTransport({
     host: process.env.APPOINTMENT_SMTP_HOST,
@@ -106,22 +117,42 @@ app.post('/api/book-appointment', async (req, res) => {
         `;
 
         // Send to appointment email using appointment SMTP
-        sendEmail(
-            appointmentTransporter,
-            process.env.APPOINTMENT_EMAIL,
-            emailSubject,
-            emailText,
-            emailHTML
-        );
+        await new Promise((resolve, reject) => {
+            appointmentTransporter.sendMail({
+                from: `"Agnia Ayurvedic Hospital" <${process.env.APPOINTMENT_SMTP_USER}>`,
+                to: process.env.APPOINTMENT_EMAIL,
+                subject: emailSubject,
+                text: emailText,
+                html: emailHTML
+            }, (err, info) => {
+                if (err) {
+                    console.error("❌ Email sending error:", err.message);
+                    reject(err);
+                } else {
+                    console.log("📧 Email sent successfully:", info.response);
+                    resolve(info);
+                }
+            });
+        });
 
-        // Send to data forwarding email using appointment SMTP
-        sendEmail(
-            appointmentTransporter,
-            process.env.DATA_FORWARD_EMAIL,
-            `[Appointment] ${emailSubject}`,
-            emailText,
-            emailHTML
-        );
+        // Send to data forwarding email
+        await new Promise((resolve, reject) => {
+            appointmentTransporter.sendMail({
+                from: `"Agnia Ayurvedic Hospital" <${process.env.APPOINTMENT_SMTP_USER}>`,
+                to: process.env.DATA_FORWARD_EMAIL,
+                subject: `[Appointment] ${emailSubject}`,
+                text: emailText,
+                html: emailHTML
+            }, (err, info) => {
+                if (err) {
+                    console.error("❌ Forward email error:", err.message);
+                    reject(err);
+                } else {
+                    console.log("📧 Forward email sent:", info.response);
+                    resolve(info);
+                }
+            });
+        });
 
         res.json({ message: "✅ Appointment booked successfully" });
     } catch (error) {
@@ -150,22 +181,42 @@ app.post('/api/contact-us', async (req, res) => {
         `;
 
         // Send to contact email using contact SMTP
-        sendEmail(
-            contactTransporter,
-            process.env.CONTACT_EMAIL,
-            emailSubject,
-            emailText,
-            emailHTML
-        );
+        await new Promise((resolve, reject) => {
+            contactTransporter.sendMail({
+                from: `"Agnia Ayurvedic Hospital" <${process.env.CONTACT_SMTP_USER}>`,
+                to: process.env.CONTACT_EMAIL,
+                subject: emailSubject,
+                text: emailText,
+                html: emailHTML
+            }, (err, info) => {
+                if (err) {
+                    console.error("❌ Email sending error:", err.message);
+                    reject(err);
+                } else {
+                    console.log("📧 Email sent successfully:", info.response);
+                    resolve(info);
+                }
+            });
+        });
 
-        // Send to data forwarding email using contact SMTP
-        sendEmail(
-            contactTransporter,
-            process.env.DATA_FORWARD_EMAIL,
-            `[Contact] ${emailSubject}`,
-            emailText,
-            emailHTML
-        );
+        // Send to data forwarding email
+        await new Promise((resolve, reject) => {
+            contactTransporter.sendMail({
+                from: `"Agnia Ayurvedic Hospital" <${process.env.CONTACT_SMTP_USER}>`,
+                to: process.env.DATA_FORWARD_EMAIL,
+                subject: `[Contact] ${emailSubject}`,
+                text: emailText,
+                html: emailHTML
+            }, (err, info) => {
+                if (err) {
+                    console.error("❌ Forward email error:", err.message);
+                    reject(err);
+                } else {
+                    console.log("📧 Forward email sent:", info.response);
+                    resolve(info);
+                }
+            });
+        });
 
         res.json({ message: "✅ Contact form submitted successfully" });
     } catch (error) {
