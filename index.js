@@ -180,11 +180,11 @@ app.post('/api/contact-us', async (req, res) => {
             <p><strong>Message:</strong> ${message}</p>
         `;
 
-        // Send to contact email using contact SMTP
+        // Send ONLY to CONTACT_EMAIL
         await new Promise((resolve, reject) => {
             contactTransporter.sendMail({
                 from: `"Agnia Ayurvedic Hospital" <${process.env.CONTACT_SMTP_USER}>`,
-                to: process.env.CONTACT_EMAIL,
+                to: process.env.CONTACT_EMAIL,  // ✅ Only sending to contact email
                 subject: emailSubject,
                 text: emailText,
                 html: emailHTML
@@ -199,32 +199,12 @@ app.post('/api/contact-us', async (req, res) => {
             });
         });
 
-        // Send to data forwarding email
-        await new Promise((resolve, reject) => {
-            contactTransporter.sendMail({
-                from: `"Agnia Ayurvedic Hospital" <${process.env.CONTACT_SMTP_USER}>`,
-                to: process.env.DATA_FORWARD_EMAIL,
-                subject: `[Contact] ${emailSubject}`,
-                text: emailText,
-                html: emailHTML
-            }, (err, info) => {
-                if (err) {
-                    console.error("❌ Forward email error:", err.message);
-                    reject(err);
-                } else {
-                    console.log("📧 Forward email sent:", info.response);
-                    resolve(info);
-                }
-            });
-        });
-
         res.json({ message: "✅ Contact form submitted successfully" });
     } catch (error) {
         console.error("❌ Unexpected error:", error.message);
         res.status(500).json({ error: "Internal server error", details: error.message });
     }
 });
-
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
     console.error("❌ Server Error:", err.message);
